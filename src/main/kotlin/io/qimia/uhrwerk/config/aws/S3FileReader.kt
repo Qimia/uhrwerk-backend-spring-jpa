@@ -1,6 +1,5 @@
 package io.qimia.uhrwerk.config.aws
 
-import io.qimia.uhrwerk.config.aws.S3FileReader.S3FileReader.s3Uri
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.core.exception.SdkClientException
 import software.amazon.awssdk.regions.Region
@@ -12,7 +11,7 @@ import java.net.URISyntaxException
 
 
 data class S3URI(
-    var bucket: String? = null, var prefix: String? = null, var file: String? = null
+    var bucket: String? = null, var dir: String? = null, var file: String? = null
 )
 
 open class S3FileReader(private val regionName: String, private val useProfile: Boolean = false) {
@@ -40,7 +39,7 @@ open class S3FileReader(private val regionName: String, private val useProfile: 
             val listObjects =
                 ListObjectsRequest.builder()
                     .bucket(uri.bucket)
-                    .prefix(uri.prefix)
+                    .prefix(uri.dir)
                     .build()
             val res = s3Client.listObjects(listObjects)
             val objects = res.contents()
@@ -63,38 +62,56 @@ open class S3FileReader(private val regionName: String, private val useProfile: 
     companion object S3FileReader {
 
         fun s3Uri(loc: String): S3URI {
-            var s3 = S3URI()
+            var bucket: String? = null
+            var dir: String? = null
+            var file: String? = null
+
             try {
                 val uri = URI(loc)
+
                 val scheme = uri.scheme
                 if (!scheme.isNullOrEmpty())
                     require(scheme == "s3")
-                val bucket = uri.host
-                if (!bucket.isNullOrEmpty() && bucket.isNotBlank())
-                    s3.bucket = bucket
 
-                var path = uri.path
-                if (!path.isNullOrEmpty()) {
-                    path = path.replaceFirst("/", "").trim()
-                    if (path.isNotEmpty())
-                        if (endsWithFile(path)) {
-                            val idx = path.lastIndexOf('/')
-                            if (idx > 0) {
-                                s3.prefix = path.substring(0, idx + 1).trim()
-                                s3.file = path.substring(idx + 1).trim()
-                            } else
-                                s3.file = path.trim()
-                        } else s3.prefix = path.trim()
-                }
+                val host = uri.host
+                if (!host.isNullOrEmpty() && host.isNotBlank())
+                    bucket = host.trim()
+
+                val dirFile = toDirFile(uri.path)
+                dir = dirFile.first
+                file = dirFile.second
+
             } catch (exp: URISyntaxException) {
             }
-            return s3
+            return S3URI(bucket, dir, file)
+        }
+
+        fun toDirFile(loc: String?): Pair<String?, String?> {
+            var dir: String? = null
+            var file: String? = null
+
+            if (!loc.isNullOrEmpty()) {
+                val path = loc.replaceFirst("/", "").trim()
+                if (path.isNotEmpty())
+                    if (endsWithFile(path)) {
+                        val idx = path.lastIndexOf('/')
+                        if (idx > 0) {
+                            dir = path.substring(0, idx + 1).trim()
+                            file = path.substring(idx + 1).trim()
+                        } else
+                            file = path.trim()
+                    } else dir = path.trim()
+            }
+            return dir to file
         }
 
         fun endsWithFile(path: String): Boolean {
-            val regex = "\\.\\w+$".toRegex()
-            return regex.containsMatchIn(path)
-        }
+            if (!path.isNullOrEmpty() && path.isNotBlank()) {
+                val regex = "\\.\\w+$".toRegex()
+                return regex.containsMatchIn(path)
+            }
+            return false
 
+        }
     }
 }

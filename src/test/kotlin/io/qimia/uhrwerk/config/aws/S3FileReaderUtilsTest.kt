@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.config.aws
 import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.config.aws.S3FileReader.S3FileReader.endsWithFile
 import io.qimia.uhrwerk.config.aws.S3FileReader.S3FileReader.s3Uri
+import io.qimia.uhrwerk.config.aws.S3FileReader.S3FileReader.toDirFile
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -30,6 +31,52 @@ class S3FileReaderUtilsTest {
     }
 
     @Test
+    fun dirFileTest1() {
+        val loc = "/root/dir1/dir2/table_a.yml"
+        val (dir, file) = toDirFile(loc)
+
+        assertThat(dir).isNotNull()
+        assertThat(dir).isEqualTo("root/dir1/dir2/")
+
+        assertThat(file).isNotNull()
+        assertThat(file).isEqualTo("table_a.yml")
+    }
+
+    @Test
+    fun dirFileTest2() {
+        val loc = "/table_a.yml"
+        val (dir, file) = toDirFile(loc)
+        assertThat(dir).isNull()
+
+        assertThat(file).isNotNull()
+        assertThat(file).isEqualTo("table_a.yml")
+    }
+    @Test
+    fun dirFileTest3() {
+        val loc = "/"
+        val (dir, file) = toDirFile(loc)
+        assertThat(dir).isNull()
+        assertThat(file).isNull()
+    }
+
+    @Test
+    fun dirFileTest4() {
+        val loc = ""
+        val (dir, file) = toDirFile(loc)
+        assertThat(dir).isNull()
+        assertThat(file).isNull()
+    }
+
+    @Test
+    fun dirFileTest5() {
+        val loc = "some_dir"
+        val (dir, file) = toDirFile(loc)
+        assertThat(dir).isNotNull()
+        assertThat(dir).isEqualTo("some_dir")
+        assertThat(file).isNull()
+    }
+
+    @Test
     fun s3UriTest1() {
 
         val loc = "s3://mytest-bucket/root/dir1/dir2/"
@@ -37,8 +84,8 @@ class S3FileReaderUtilsTest {
         assertThat(uri.bucket).isNotNull()
         assertThat(uri.bucket).isEqualTo("mytest-bucket")
 
-        assertThat(uri.prefix).isNotNull()
-        assertThat(uri.prefix).isEqualTo("root/dir1/dir2/")
+        assertThat(uri.dir).isNotNull()
+        assertThat(uri.dir).isEqualTo("root/dir1/dir2/")
 
         assertThat(uri.file).isNull()
 
@@ -53,8 +100,8 @@ class S3FileReaderUtilsTest {
         assertThat(uri.bucket).isNotNull()
         assertThat(uri.bucket).isEqualTo("mytest-bucket")
 
-        assertThat(uri.prefix).isNotNull()
-        assertThat(uri.prefix).isEqualTo("root/dir1/dir2/")
+        assertThat(uri.dir).isNotNull()
+        assertThat(uri.dir).isEqualTo("root/dir1/dir2/")
 
         assertThat(uri.file).isNotNull()
         assertThat(uri.file).isEqualTo("table_a.yml")
@@ -69,7 +116,7 @@ class S3FileReaderUtilsTest {
         assertThat(uri.bucket).isNotNull()
         assertThat(uri.bucket).isEqualTo("mytest-bucket")
 
-        assertThat(uri.prefix).isNull()
+        assertThat(uri.dir).isNull()
 
         assertThat(uri.file).isNotNull()
         assertThat(uri.file).isEqualTo("table_a.yml")
@@ -84,7 +131,7 @@ class S3FileReaderUtilsTest {
         assertThat(uri.bucket).isNotNull()
         assertThat(uri.bucket).isEqualTo("mytest-bucket")
 
-        assertThat(uri.prefix).isNull()
+        assertThat(uri.dir).isNull()
 
         assertThat(uri.file).isNull()
 
@@ -103,7 +150,7 @@ class S3FileReaderUtilsTest {
         val uri = s3Uri(loc)
         assertThat(uri.bucket).isNull()
 
-        assertThat(uri.prefix).isNull()
+        assertThat(uri.dir).isNull()
 
         assertThat(uri.file).isNull()
 
