@@ -6,10 +6,13 @@ import java.time.LocalDateTime
 @Entity
 @Table(
     name = "connection",
-    indexes = [Index(
+    //TODO: Removed following code part, because it couldn't create the index within the local MySQL DB
+    /*
+       indexes = [Index(
         name = "idx_conn_name",
         columnList = "name", unique = false
     )],
+     */
     uniqueConstraints = [UniqueConstraint(
         name = "idx_conn_unique",
         columnNames = ["name", "deactivated_epoch"]
