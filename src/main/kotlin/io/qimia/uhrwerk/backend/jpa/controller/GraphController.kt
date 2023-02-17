@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.gson.Gson
 import io.qimia.uhrwerk.config.yaml.Reference
 import io.qimia.uhrwerk.tools.TableInfo
+import io.qimia.uhrwerk.util.D3DagAdapter
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
 import org.springframework.stereotype.Controller
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam
 @Controller
 class GraphController {
     @GetMapping(value = ["/visualizeGraph"])
-    fun visualizeGraph(@RequestParam(name="json", required = true, defaultValue="empty") json: String, model: Model,): String {
+    fun visualizeGraph(@RequestParam(name="json", required = true, defaultValue="empty") json: String, model: Model): String {
         val dag =
             DefaultDirectedGraph<TableInfo, DefaultEdge>(DefaultEdge::class.java)
 
@@ -49,12 +50,20 @@ class GraphController {
         dag.addEdge(dep2Dep1,dep2)
 
         var gson = Gson()
-        println("Printing DAG JSON")
-        println(gson.toJson(dag.edgeSet()))
 
+        val d3DagAdapter = D3DagAdapter()
+        println("Printing VertexSet JSON")
+        println(gson.toJson(dag.vertexSet()))
+        println("Printing EdgeSet JSON")
+        println(gson.toJson(dag.edgeSet()))
+        println("Printing DAG JSON")
+        println(gson.toJson(d3DagAdapter.buildJson(dag)))
+
+        //TODO: Graph should look more beautiful, arrows from parent to child,
+        // wrap text around circle, make graph horizontal
 
         println(ObjectMapper().writeValueAsString(dag))
-        model.addAttribute("json",json)
+        model.addAttribute("json",gson.toJson(d3DagAdapter.buildJson(dag)))
         return "visualizeGraph"
     }
 

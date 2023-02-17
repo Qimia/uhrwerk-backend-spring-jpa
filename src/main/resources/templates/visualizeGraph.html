@@ -16,16 +16,14 @@
         (async () => {
             // fetch data and render
             const resp_html  = [[${json}]];
-            const resp = await fetch(
-                "https://raw.githubusercontent.com/erikbrinkman/d3-dag/main/examples/grafo.json"
-            );
-            alert()
-            const data = await resp.json();
-
+            //const data = await resp.json();
+            const data = JSON.parse(resp_html);
             const dag = d3.dagStratify()(data);
-            const nodeRadius = 20;
+            const nodeRadius = 35;
             const layout = d3
                 .sugiyama() // base layout
+                .layering(d3.layeringSimplex())
+                //.coord(d3.coordTopological())
                 .decross(d3.decrossOpt()) // minimize number of crossings
                 .nodeSize((node) => [(node ? 3.6 : 0.25) * nodeRadius, 3 * nodeRadius]); // set node size instead of constraining to fit
             const { width, height } = layout(dag);
@@ -37,11 +35,13 @@
             svgSelection.attr("viewBox", [0, 0, width, height].join(" "));
             const defs = svgSelection.append("defs"); // For gradients
 
-            const steps = dag.size();
-            const interp = d3.interpolateRainbow;
             const colorMap = new Map();
             for (const [i, node] of dag.idescendants().entries()) {
-                colorMap.set(node.data.id, interp(i / steps));
+                if (node.data.processed) {
+                    colorMap.set(node.data.id, "green");
+                } else {
+                    colorMap.set(node.data.id, "red");
+                }
             }
 
             // How to draw edges
@@ -106,7 +106,7 @@
                 .attr("font-family", "sans-serif")
                 .attr("text-anchor", "middle")
                 .attr("alignment-baseline", "middle")
-                .attr("fill", "white");
+                .attr("fill", "black");
         })();
     </script>
 

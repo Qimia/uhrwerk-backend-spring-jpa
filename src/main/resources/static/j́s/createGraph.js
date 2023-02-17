@@ -91,5 +91,5 @@
         .attr("font-family", "sans-serif")
         .attr("text-anchor", "middle")
         .attr("alignment-baseline", "middle")
-        .attr("fill", "white");
+        .attr("fill", "black");
 })();
